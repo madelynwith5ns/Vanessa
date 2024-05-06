@@ -38,7 +38,7 @@ pub(crate) const VANESSA_LOGGER: Logger = Logger {
 };
 
 // COLOR WOO
-const BRACKET_COLOR: &'static str = "\x1b[38;2;220;224;232m";
+const BRACKET_COLOR: &'static str = "\x1b[38;2;108;111;133m";
 const INFO_COLOR: &'static str = "\x1b[38;2;30;102;245m";
 const OK_COLOR: &'static str = "\x1b[38;2;64;160;43m";
 const WARN_COLOR: &'static str = "\x1b[38;2;223;142;29m";
