@@ -252,7 +252,7 @@ unsafe fn init_multi_log() {
 
     match std::fs::write(
         &lf,
-        format!("!Timestamp: {}\n", crate::time::epoch_millis()).as_bytes(),
+        format!("!Timestamp: {}\n", crate::time::timestamp_now()).as_bytes(),
     ) {
         Ok(_) => {}
         Err(_) => {
@@ -362,8 +362,9 @@ impl Logger<'_> {
 
     /// Logging function, you'll usually want to use the macros.
     pub fn log(&self, level: LogLevel, text: String) -> Option<String> {
+        let timestamp = crate::time::timestamp_now();
         if level == LogLevel::INPUT {
-            self.log_term(level, &text);
+            self.log_term(&timestamp, level, &text);
             print!(" {INPUT_COLOR}");
             std::io::stdout().flush().ok();
             let mut input = String::new();
@@ -382,22 +383,25 @@ impl Logger<'_> {
 
             // remove the newline
             input = input.replace("\n", "");
-            self.log_file(level, &format!("{} {}", &text, &input));
+            self.log_file(&timestamp, level, &format!("{} {}", &text, &input));
             return Some(input);
         }
 
         if level >= self.tlevel {
-            self.log_term(level, &text);
+            self.log_term(&timestamp, level, &text);
         }
         if level >= self.flevel {
-            self.log_file(level, &text);
+            self.log_file(&timestamp, level, &text);
         }
         return None;
     }
 
-    fn log_term(&self, level: LogLevel, text: &String) {
+    fn log_term(&self, timestamp: &String, level: LogLevel, text: &String) {
         let text = format!(
-            "{}({}{}{level}{}){} {text}",
+            "{}({}{} {}|{} {}{level}{}){} {text}",
+            BRACKET_COLOR,
+            level.ansi_color(),
+            timestamp,
             BRACKET_COLOR,
             level.ansi_color(),
             match self.prefix {
@@ -419,7 +423,7 @@ impl Logger<'_> {
         }
     }
 
-    fn log_file(&self, level: LogLevel, text: &String) {
+    fn log_file(&self, timestamp: &String, level: LogLevel, text: &String) {
         // we are like, extremely fail-out happy here
         if unsafe { LOG_FILE.is_none() } {
             return;
@@ -440,7 +444,8 @@ impl Logger<'_> {
         };
         file.write_all(
             format!(
-                "({}{level}) {text}\n",
+                "({} | {}{level}) {text}\n",
+                timestamp,
                 match self.prefix {
                     Some(prefix) => {
                         format!("{} | ", prefix)
