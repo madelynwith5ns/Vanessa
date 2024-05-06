@@ -250,10 +250,10 @@ unsafe fn init_multi_log() {
         }
     }
 
-    let now = std::time::UNIX_EPOCH
-        .elapsed()
-        .expect("time went backwards, oops");
-    match std::fs::write(&lf, format!("!Timestamp: {}\n", now.as_millis()).as_bytes()) {
+    match std::fs::write(
+        &lf,
+        format!("!Timestamp: {}\n", crate::time::epoch_millis()).as_bytes(),
+    ) {
         Ok(_) => {}
         Err(_) => {
             // again, cant write, cant log

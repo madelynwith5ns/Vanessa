@@ -1,6 +1,6 @@
 use crate as vanessa;
 
-/// This just checks to make sure we dont accidentally
+/// This just checks to make sure we don't accidentally
 /// break logger macro usage.
 /// This is how the logger will be used.
 #[test]
@@ -24,4 +24,23 @@ fn logger_interface() {
     vanessa::serror!(logger2, "Error log.");
     vanessa::fatal!("Fatal log.");
     vanessa::sfatal!(logger2, "Fatal log.");
+}
+
+/// This makes sure we don't accidentally break time usage.
+/// This is how the time system will be used.
+#[test]
+fn time_interface() {
+    use vanessa::time::*;
+
+    let now = epoch_millis();
+    epoch_days(now);
+    epoch_months(now);
+    epoch_years(now);
+    current_month(now);
+    date(now);
+    hour(now);
+    minute(now);
+    second(now);
+    timestamp(now);
+    timestamp_now();
 }
