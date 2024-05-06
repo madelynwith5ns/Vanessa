@@ -20,3 +20,5 @@ jobs:
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
+    - name: Formatting check
+      run: rustfmt --edition 2021 --check -v src/*
