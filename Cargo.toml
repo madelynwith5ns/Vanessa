@@ -1,0 +1,14 @@
+[package]
+name = "vanessa"
+version = "0.1.0"
+edition = "2021"
+authors = [ "MadelynWith5Ns <madelynwith5ns@proton.me>" ]
+description = "An opinionated runtime and framework for Rust programs"
+
+[lib]
+crate-type = [ "dylib", "lib" ]
+
+[dependencies]
+
+[features]
+multilog = [ ]
