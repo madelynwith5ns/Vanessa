@@ -213,7 +213,7 @@ unsafe fn init_single_log() {
 #[allow(dead_code)]
 unsafe fn init_multi_log() {
     // create a logs dir if it doesnt exist
-    let logs_dir = Path::new("logs/");
+    let logs_dir = Path::new("logs");
     if !logs_dir.exists() {
         if std::fs::create_dir_all(logs_dir).is_err() {
             // fuck
@@ -222,7 +222,7 @@ unsafe fn init_multi_log() {
         }
     }
 
-    let lf = PathBuf::from_str("logs/latest.log").unwrap();
+    let lf = logs_dir.join(Path::new("latest.log"));
     if lf.exists() {
         let file = match File::open(&lf) {
             Ok(file) => file,
@@ -239,7 +239,9 @@ unsafe fn init_multi_log() {
         }
         if first_line.starts_with("!Timestamp: ") {
             let timestamp = first_line[12..].replace("\n", "");
-            match std::fs::copy(&lf, Path::new(&format!("logs/{timestamp}.log"))) {
+            let log_path = Path::new("logs");
+            let log_path = log_path.join(Path::new(&format!("{timestamp}.log")));
+            match std::fs::copy(&lf, log_path) {
                 Ok(_) => {}
                 Err(_) => {
                     eprintln!("Failed to copy previous log file. Cannot preserve.");

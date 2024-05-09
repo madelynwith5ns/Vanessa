@@ -1,1 +1,6 @@
 Vanessa is a semi-opinionated runtime and utility library for Rust programs.
+
+-- Cargo features --
+multilog: Enabling this causes Vanessa's logger to store its current log file
+in the logs/latest.log file instead of simply latest.log and store old logs
+alongside them in the logs directory.
