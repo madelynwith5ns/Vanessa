@@ -43,4 +43,5 @@ fn time_interface() {
     second(now);
     timestamp(now);
     timestamp_now();
+    epoch_nanos();
 }

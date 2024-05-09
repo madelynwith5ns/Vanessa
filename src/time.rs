@@ -8,6 +8,15 @@ pub fn epoch_millis() -> u128 {
     };
 }
 
+/// Same as epoch_millis() but in nanoseconds.
+pub fn epoch_nanos() -> u128 {
+    let now = std::time::SystemTime::now();
+    return match now.duration_since(std::time::UNIX_EPOCH) {
+        Ok(duration) => duration.as_nanos(),
+        Err(_) => 0,
+    };
+}
+
 /// Returns the number of days since the UNIX epoch.
 pub fn epoch_days(point: u128) -> u128 {
     // you all know what that 86.4m is
