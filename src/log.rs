@@ -4,6 +4,7 @@ use std::{
     io::{BufRead, BufReader, Seek, SeekFrom, Write},
     path::{Path, PathBuf},
     str::FromStr,
+    sync::RwLock,
 };
 
 /// This is the primary program logger. This is the one without a prefix that
@@ -54,7 +55,7 @@ const STYLE_RESET: &'static str = "\x1b[0m";
 /// program, this is safe.
 /// otherwise, you're already using it wrong so i dont care
 /// skill issue.
-static mut LOG_FILE: Option<PathBuf> = None;
+static LOG_FILE: RwLock<Option<PathBuf>> = RwLock::new(None);
 
 // In comes the macro spamming!
 #[macro_export]
@@ -180,29 +181,43 @@ macro_rules! sinput {
 pub fn init() {
     // if we already have a log file the user is being naughty and calling
     // this more than once.
-    if unsafe { !LOG_FILE.is_none() } {
+    let read = match LOG_FILE.read() {
+        Ok(file) => file,
+        Err(_) => {
+            VANESSA_LOGGER.log(
+                LogLevel::ERROR,
+                format!("cannot acquire log file. can't be initialized."),
+            );
+            return;
+        }
+    };
+    if read.is_some() {
         VANESSA_LOGGER.log(
             LogLevel::ERROR,
             format!("vanessa::log::init() called more than once. Don't do that."),
         );
         return;
     }
+    // if we dont drop this the real inits get caught forever
+    // waiting for it to drop
+    drop(read);
 
     #[cfg(feature = "multilog")]
-    unsafe {
-        init_multi_log();
-    }
+    init_multi_log();
     #[cfg(not(feature = "multilog"))]
-    unsafe {
-        init_single_log();
-    }
+    init_single_log();
 }
 
 #[allow(dead_code)]
-unsafe fn init_single_log() {
-    LOG_FILE = Some(PathBuf::from_str("latest.log").unwrap());
-
-    let lf = LOG_FILE.as_ref().unwrap();
+fn init_single_log() {
+    let mut file = match LOG_FILE.write() {
+        Ok(file) => file,
+        Err(_) => {
+            return;
+        }
+    };
+    file.replace(PathBuf::from_str("latest.log").unwrap());
+    let lf = file.as_ref().unwrap();
     if std::fs::write(lf, b"").is_err() {
         // if we cant write to it we cant log to it
         file_logging_oops();
@@ -211,7 +226,7 @@ unsafe fn init_single_log() {
 }
 
 #[allow(dead_code)]
-unsafe fn init_multi_log() {
+fn init_multi_log() {
     // create a logs dir if it doesnt exist
     let logs_dir = Path::new("logs");
     if !logs_dir.exists() {
@@ -262,14 +277,18 @@ unsafe fn init_multi_log() {
             file_logging_oops();
         }
     };
-    LOG_FILE = Some(lf);
+    let mut file = match LOG_FILE.write() {
+        Ok(file) => file,
+        Err(_) => {
+            serror!(VANESSA_LOGGER, "cannot acquire file. cannot initialize.");
+            return;
+        }
+    };
+    file.replace(lf);
 }
 
 fn file_logging_oops() {
     eprintln!("Failed to initialize file logging. It will not be present.");
-    unsafe {
-        LOG_FILE = None;
-    }
 }
 
 /// Represents the various log levels.
@@ -427,12 +446,18 @@ impl Logger<'_> {
 
     fn log_file(&self, timestamp: &String, level: LogLevel, text: &String) {
         // we are like, extremely fail-out happy here
-        if unsafe { LOG_FILE.is_none() } {
+        let file = match LOG_FILE.read() {
+            Ok(file) => file,
+            Err(_) => {
+                return;
+            }
+        };
+        if file.is_none() {
             return;
         }
         let mut opts = OpenOptions::new();
         let opts = opts.write(true).append(true);
-        let mut file = match opts.open(unsafe { LOG_FILE.as_ref().unwrap() }) {
+        let mut file = match opts.open(file.as_ref().unwrap()) {
             Ok(file) => file,
             Err(_) => {
                 return;
