@@ -45,3 +45,12 @@ fn time_interface() {
     timestamp_now();
     epoch_nanos();
 }
+
+#[test]
+/// This makes sure we don't accidentally break worker usage.
+fn worker_interface() {
+    use vanessa::worker::*;
+    init();
+    bg(||{});
+    shutdown_blocking();
+}
