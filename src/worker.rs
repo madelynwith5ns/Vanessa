@@ -163,15 +163,17 @@ pub fn shutdown_blocking() {
     };
 
     for w in &mut pool.workers {
-        if w.thread.is_none() { continue; }
+        if w.thread.is_none() {
+            continue;
+        }
         match w.thread.take().unwrap().join() {
             Ok(_) => {
                 sdebug!(VANESSA_LOGGER, "Thread of worker #{} joined.", w.id);
-            },
+            }
             Err(_) => {
                 swarn!(VANESSA_LOGGER, "Failed to join a thread. It might get accidentally killed in a main-thread exit!");
                 return;
-            },
+            }
         };
     }
 }

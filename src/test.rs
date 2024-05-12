@@ -51,6 +51,6 @@ fn time_interface() {
 fn worker_interface() {
     use vanessa::worker::*;
     init();
-    bg(||{});
+    bg(|| {});
     shutdown_blocking();
 }
