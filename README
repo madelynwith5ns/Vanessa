@@ -1,4 +1,5 @@
-Vanessa is a semi-opinionated runtime and utility library for Rust programs.
+Vanessa is a semi-opinionated, dependency-free, threading and utility library
+for Rust programs.
 
 -- Cargo features --
 multilog: Enabling this causes Vanessa's logger to store its current log file
