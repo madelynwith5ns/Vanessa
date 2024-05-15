@@ -381,6 +381,22 @@ impl Logger<'_> {
         };
     }
 
+    /// Quickly create a logger with the specified prefix.
+    /// Uses the default log level.
+    pub fn quick(prefix: &str) -> Logger {
+        return Logger {
+            prefix: Some(prefix),
+            #[cfg(debug_assertions)]
+            tlevel: LogLevel::DEBUG,
+            #[cfg(not(debug_assertions))]
+            tlevel: LogLevel::INFO,
+            #[cfg(debug_assertions)]
+            flevel: LogLevel::DEBUG,
+            #[cfg(not(debug_assertions))]
+            flevel: LogLevel::INFO,
+        };
+    }
+
     /// Logging function, you'll usually want to use the macros.
     pub fn log(&self, level: LogLevel, text: String) -> Option<String> {
         let timestamp = crate::time::timestamp_now();
