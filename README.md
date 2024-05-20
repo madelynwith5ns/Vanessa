@@ -9,7 +9,10 @@ It provides an extremely easy logger and dead-simple threading.
 Logging is super simple, initialize it at the start of your program
 and you can use the various log level macros anywhere in your program!
 You can also create new loggers and log to them with the `s` macros
-(like `sinfo!` or `sdebug!`). Loggers have 7 levels here:
+(like `sinfo!` or `sdebug!`). If you want to save multiple log files
+instead of only storing the latest log, enable the `multilog` feature.
+
+Loggers have 7 levels here:
 
 - Hyper: Hyper is for really spammy debug messaging. The default logger
 and any logger from `Logger::quick` has the log level set too high
@@ -51,6 +54,8 @@ fn main() {
 Concurrency is done via background workers. Call the init function
 at the start of your program and you can call the `bg` function from
 anywhere to run a closure in the background!
+
+The `workers` feature flag is enabled by default.
 
 ```rust
 use vanessa::worker::bg;

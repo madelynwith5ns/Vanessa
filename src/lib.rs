@@ -5,8 +5,11 @@ mod test;
 pub fn full_init() {
     crate::sdebug!(log::VANESSA_LOGGER, "Initializing vanessa::log");
     log::init();
-    crate::sdebug!(log::VANESSA_LOGGER, "Initializing vanessa::worker");
-    worker::init();
+    #[cfg(feature = "workers")]
+    {
+        crate::sdebug!(log::VANESSA_LOGGER, "Initializing vanessa::worker");
+        worker::init();
+    }
 }
 
 /// This module provides the logging facilities of the Vanessa Runtime.
@@ -17,4 +20,5 @@ pub mod log;
 pub mod time;
 
 /// This module deals with background workers.
+#[cfg(feature = "workers")]
 pub mod worker;
