@@ -181,30 +181,35 @@ macro_rules! sinput {
 pub fn init() {
     // if we already have a log file the user is being naughty and calling
     // this more than once.
-    let read = match LOG_FILE.read() {
-        Ok(file) => file,
-        Err(_) => {
+    #[cfg(feature = "file-log")]
+    {
+        let read = match LOG_FILE.read() {
+            Ok(file) => file,
+            Err(_) => {
+                VANESSA_LOGGER.log(
+                    LogLevel::ERROR,
+                    format!("cannot acquire log file. can't be initialized."),
+                );
+                return;
+            }
+        };
+        if read.is_some() {
             VANESSA_LOGGER.log(
                 LogLevel::ERROR,
-                format!("cannot acquire log file. can't be initialized."),
+                format!("vanessa::log::init() called more than once. Don't do that."),
             );
             return;
         }
-    };
-    if read.is_some() {
-        VANESSA_LOGGER.log(
-            LogLevel::ERROR,
-            format!("vanessa::log::init() called more than once. Don't do that."),
-        );
-        return;
+        // if we dont drop this the real inits get caught forever
+        // waiting for it to drop
+        drop(read);
     }
-    // if we dont drop this the real inits get caught forever
-    // waiting for it to drop
-    drop(read);
 
     #[cfg(feature = "multilog")]
+    #[cfg(feature = "file-log")]
     init_multi_log();
     #[cfg(not(feature = "multilog"))]
+    #[cfg(feature = "file-log")]
     init_single_log();
 }
 
@@ -420,6 +425,7 @@ impl Logger<'_> {
 
             // remove the newline
             input = input.replace("\n", "");
+            #[cfg(feature = "file-log")]
             self.log_file(&timestamp, level, &format!("{} {}", &text, &input));
             return Some(input);
         }
@@ -427,6 +433,7 @@ impl Logger<'_> {
         if level >= self.tlevel {
             self.log_term(&timestamp, level, &text);
         }
+        #[cfg(feature = "file-log")]
         if level >= self.flevel {
             self.log_file(&timestamp, level, &text);
         }
