@@ -3,9 +3,11 @@ name = "vanessa"
 version = "0.1.0"
 edition = "2021"
 authors = [ "MadelynWith5Ns <madelynwith5ns@proton.me>" ]
-description = "An opinionated runtime and framework for Rust programs"
-
-
+description = "Dependency-free, synchronous, threading and utility library for Rust."
+license = "Unlicense"
+homepage = "https://github.com/madelynwith5ns/vanessa"
+repository = "https://github.com/madelynwith5ns/vanessa"
+readme = "README.md"
 
 [lib]
 crate-type = [ "dylib", "lib" ]
