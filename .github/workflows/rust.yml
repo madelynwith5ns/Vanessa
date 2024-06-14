@@ -1,4 +1,4 @@
-name: Rust
+name: Rust (vanessa-rs)
 
 on:
   push:
@@ -16,8 +16,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build
+      working-directory: ./vanessa-rs
       run: cargo build --verbose
     - name: Run tests
+      working-directory: ./vanessa-rs
       run: cargo test --verbose
   format:
     runs-on: ubuntu-latest
@@ -25,4 +27,5 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Formatting check
+      working-directory: ./vanessa-rs
       run: rustfmt --edition 2021 --check -v src/*
