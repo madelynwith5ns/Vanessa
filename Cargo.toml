@@ -1,6 +1,6 @@
 [package]
 name = "vanessa"
-version = "0.1.1-alpha"
+version = "0.1.2"
 edition = "2021"
 authors = [ "MadelynWith5Ns <madelynwith5ns@proton.me>" ]
 description = "Dependency-free, synchronous, threading and utility library for Rust."
@@ -18,4 +18,5 @@ crate-type = [ "dylib", "lib" ]
 default = [ "workers", "file-log" ]
 file-log = [ ]
 multilog = [ "file-log" ]
+compact-terminal-log = [ ]
 workers = [ ]

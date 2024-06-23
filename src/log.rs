@@ -441,6 +441,7 @@ impl Logger<'_> {
     }
 
     fn log_term(&self, timestamp: &String, level: LogLevel, text: &String) {
+        #[cfg(not(feature = "compact-terminal-log"))]
         let text = format!(
             "{}({}{} {}|{} {}{level}{}){} {text}",
             BRACKET_COLOR,
@@ -459,6 +460,19 @@ impl Logger<'_> {
             BRACKET_COLOR,
             STYLE_RESET
         );
+        #[cfg(feature = "compact-terminal-log")]
+        let text = format!(
+            "{}({}{level}{}){} {text}",
+            BRACKET_COLOR,
+            level.ansi_color(),
+            BRACKET_COLOR,
+            STYLE_RESET
+        );
+        // this is here to fuckoff compile warnings when we compile with
+        // compact-terminal-log
+        // but since rust I can't #[cfg] this one lmao
+        _ = timestamp;
+
         if level == LogLevel::INPUT {
             print!("{text}");
             std::io::stdout().flush().ok();
