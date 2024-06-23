@@ -1,9 +1,12 @@
 use std::{
     num::NonZeroUsize,
-    sync::{mpsc::{channel, Receiver, Sender}, Arc, Mutex, RwLock},
+    sync::{
+        mpsc::{channel, Receiver, Sender},
+        Arc, Mutex, RwLock,
+    },
 };
 
-use crate::{debug, log::VANESSA_LOGGER, sdebug, serror, swarn};
+use crate::{log::VANESSA_LOGGER, sdebug, serror, swarn};
 
 struct WorkerPool {
     workers: Vec<Worker>,
@@ -27,18 +30,9 @@ pub enum TaskError {
 }
 
 impl TaskHandle {
-    pub fn require(self) -> Result<(), TaskError> {
-        match self.recv.recv() {
-            Ok(_) => { 
-                debug!("Task completed and required.");
-                return Ok(());
-            },
-            Err(_) => {
-                serror!(VANESSA_LOGGER, "Failed to require() a task's completion!");
-                serror!(VANESSA_LOGGER, "The channel for communication with the task was broken!");
-                return Err(TaskError::BROKENCHANNEL);
-            },
-        }
+    /// Waits until a task is done.
+    pub fn require(self) {
+        self.recv.recv().ok();
     }
 }
 
@@ -80,7 +74,7 @@ pub fn init_with(jobs: usize) {
                 loop {
                     let task: Task = r.lock().unwrap().recv().unwrap();
                     match task {
-                        Some((task,chn)) => {
+                        Some((task, chn)) => {
                             sdebug!(VANESSA_LOGGER, "Background worker #{i} got a task!");
                             task();
                             chn.send(()).ok();
@@ -136,9 +130,14 @@ where
         return Err(TaskError::POOLNOTINITIALIZED);
     }
 
-    let (send,recv) = channel();
+    let (send, recv) = channel();
 
-    match pool.sender.as_ref().unwrap().send(Some((Box::new(f),send))) {
+    match pool
+        .sender
+        .as_ref()
+        .unwrap()
+        .send(Some((Box::new(f), send)))
+    {
         Ok(_) => {
             return Ok(TaskHandle { recv });
         }
