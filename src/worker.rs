@@ -1,9 +1,9 @@
 use std::{
     num::NonZeroUsize,
-    sync::{mpsc::Sender, Arc, Mutex, RwLock},
+    sync::{mpsc::{channel, Receiver, Sender}, Arc, Mutex, RwLock},
 };
 
-use crate::{log::VANESSA_LOGGER, sdebug, serror, swarn};
+use crate::{debug, log::VANESSA_LOGGER, sdebug, serror, swarn};
 
 struct WorkerPool {
     workers: Vec<Worker>,
@@ -15,7 +15,34 @@ struct Worker {
     thread: Option<std::thread::JoinHandle<()>>,
 }
 
-type Task = Option<Box<dyn FnOnce() + Send + 'static>>;
+pub struct TaskHandle {
+    recv: Receiver<()>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum TaskError {
+    BROKENPOOL,
+    POOLNOTINITIALIZED,
+    BROKENCHANNEL,
+}
+
+impl TaskHandle {
+    pub fn require(self) -> Result<(), TaskError> {
+        match self.recv.recv() {
+            Ok(_) => { 
+                debug!("Task completed and required.");
+                return Ok(());
+            },
+            Err(_) => {
+                serror!(VANESSA_LOGGER, "Failed to require() a task's completion!");
+                serror!(VANESSA_LOGGER, "The channel for communication with the task was broken!");
+                return Err(TaskError::BROKENCHANNEL);
+            },
+        }
+    }
+}
+
+type Task = Option<(Box<dyn FnOnce() + Send + 'static>, Sender<()>)>;
 
 static GLOBAL_POOL: RwLock<WorkerPool> = RwLock::new(WorkerPool {
     sender: None,
@@ -53,9 +80,10 @@ pub fn init_with(jobs: usize) {
                 loop {
                     let task: Task = r.lock().unwrap().recv().unwrap();
                     match task {
-                        Some(task) => {
+                        Some((task,chn)) => {
                             sdebug!(VANESSA_LOGGER, "Background worker #{i} got a task!");
                             task();
+                            chn.send(()).ok();
                         }
                         None => {
                             sdebug!(
@@ -89,7 +117,7 @@ pub fn init() {
 
 /// Submit a background task. It will be executed by a thread on the worker
 /// pool as soon as one is available.
-pub fn bg<F>(f: F)
+pub fn bg<F>(f: F) -> Result<TaskHandle, TaskError>
 where
     F: FnOnce() + Send + 'static,
 {
@@ -97,7 +125,7 @@ where
         Ok(pool) => pool,
         Err(_) => {
             serror!(VANESSA_LOGGER, "Failed to submit a background task!");
-            return;
+            return Err(TaskError::BROKENPOOL);
         }
     };
     if pool.sender.is_none() {
@@ -105,12 +133,18 @@ where
             VANESSA_LOGGER,
             "Tried to submit a background task before subsystem initialized!"
         );
-        return;
+        return Err(TaskError::POOLNOTINITIALIZED);
     }
-    match pool.sender.as_ref().unwrap().send(Some(Box::new(f))) {
-        Ok(_) => {}
+
+    let (send,recv) = channel();
+
+    match pool.sender.as_ref().unwrap().send(Some((Box::new(f),send))) {
+        Ok(_) => {
+            return Ok(TaskHandle { recv });
+        }
         Err(_) => {
             serror!(VANESSA_LOGGER, "Failed to submit a background task!");
+            return Err(TaskError::BROKENCHANNEL);
         }
     };
 }
