@@ -16,6 +16,7 @@ jobs:
 
     steps:
     - uses: https://code.forgejo.org/actions/checkout@v4
+    - uses: https://github.com/dtolnay/rust-toolchain@stable
     - name: Build
       run: cargo build --verbose
     - name: Run tests
@@ -26,5 +27,8 @@ jobs:
     
     steps:
     - uses: https://code.forgejo.org/actions/checkout@v4
+    - uses: https://github.com/dtolnay/rust-toolchain@stable
+    - name: rustfmt
+      run: rustup component add rustfmt
     - name: Formatting check
       run: rustfmt --edition 2021 --check -v src/*
