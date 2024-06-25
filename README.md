@@ -72,3 +72,11 @@ fn main() {
     });
 }
 ```
+
+If you need to wait for the completion of a job, you can `require` it:
+
+```rust
+let handle = bg(||{ /* some heavy operation here */ }).unwrap();
+/* do some other stuff while you wait */
+bg.require(); // wait for the job to finish
+```
